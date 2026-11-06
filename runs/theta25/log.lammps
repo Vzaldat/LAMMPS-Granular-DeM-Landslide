@@ -1,0 +1,228 @@
+LAMMPS (30 Sep 2026)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+# ============================================================
+# 2D inclined-slope granular flow (DEM) - tested starter script
+# Retaining wall holds a pile of grains on an incline; the wall
+# is removed and the pile slumps/flows downslope and deposits
+# against an end wall.
+# Run:  lmp -in slope_flow_dem.in
+# Sweep: lmp -in slope_flow_dem.in -var theta 25 -var mu 0.4
+# ============================================================
+
+# ---------- parameters (edit these) ----------
+variable        theta     index 30.0      # slope angle, degrees
+variable        dia       equal 0.010     # grain diameter, m
+variable        rho       equal 2500.0    # grain density, kg/m^3
+variable        E         equal 1.0e8     # Young's modulus, Pa
+variable        nu        equal 0.3       # Poisson ratio
+variable        rest      equal 0.5       # restitution coefficient
+variable        mu        index 0.5       # friction coefficient (grain-grain and grain-wall)
+variable        dt        equal 1.0e-5    # timestep, s
+variable        settle    index 30000     # steps to settle pile (0.3 s)
+variable        flow      index 150000    # steps of flow after release (1.5 s)
+
+# ---------- setup ----------
+units           si
+dimension       2
+boundary        f f p
+atom_style      sphere
+comm_modify     vel yes
+
+# box: x = downslope, y = slope-normal
+region          box block 0.0 1.0 0.0 0.4 -0.005 0.005 units box
+create_box      1 box
+Created orthogonal box = (0 0 -0.005) to (1 0.4 0.005)
+  1 by 1 by 1 MPI processor grid
+
+# grains on a square lattice slightly wider than the diameter (no initial overlap)
+lattice         sq 0.0105
+Lattice spacing in x,y,z = 0.0105 0.0105 0.0105
+region          pile block 0.02 0.30 0.01 0.20 -0.5 0.5 units box
+create_atoms    1 region pile
+Created 513 atoms
+  using lattice units in orthogonal box = (0 0 -0.005) to (1 0.4 0.005)
+  create_atoms CPU = 0.001 seconds
+set             type 1 diameter ${dia}
+set             type 1 diameter 0.01
+Setting atom values ...
+  513 settings made for diameter
+set             type 1 density/disc ${rho}
+set             type 1 density/disc 2500
+Setting atom values ...
+  513 settings made for density/disc
+
+# ---------- contact model ----------
+pair_style      granular
+pair_coeff      * * hertz/material ${E} ${rest} ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji
+pair_coeff      * * hertz/material 100000000 ${rest} ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji
+pair_coeff      * * hertz/material 100000000 0.5 ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji
+pair_coeff      * * hertz/material 100000000 0.5 0.3 tangential mindlin NULL 1.0 ${mu} damping tsuji
+pair_coeff      * * hertz/material 100000000 0.5 0.3 tangential mindlin NULL 1.0 0.4 damping tsuji
+neighbor        0.002 bin
+neigh_modify    every 1 delay 0 check yes
+
+# ---------- walls ----------
+# base (y=0) and back/end walls (x=0, x=1.0) stay for the whole run
+fix             base   all wall/gran granular hertz/material ${E} ${rest} ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji                        yplane 0.0 NULL
+fix             base   all wall/gran granular hertz/material 100000000 ${rest} ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji                        yplane 0.0 NULL
+fix             base   all wall/gran granular hertz/material 100000000 0.5 ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji                        yplane 0.0 NULL
+fix             base   all wall/gran granular hertz/material 100000000 0.5 0.3 tangential mindlin NULL 1.0 ${mu} damping tsuji                        yplane 0.0 NULL
+fix             base   all wall/gran granular hertz/material 100000000 0.5 0.3 tangential mindlin NULL 1.0 0.4 damping tsuji                        yplane 0.0 NULL
+fix             ends   all wall/gran granular hertz/material ${E} ${rest} ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji                        xplane 0.0 1.0
+fix             ends   all wall/gran granular hertz/material 100000000 ${rest} ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji                        xplane 0.0 1.0
+fix             ends   all wall/gran granular hertz/material 100000000 0.5 ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji                        xplane 0.0 1.0
+fix             ends   all wall/gran granular hertz/material 100000000 0.5 0.3 tangential mindlin NULL 1.0 ${mu} damping tsuji                        xplane 0.0 1.0
+fix             ends   all wall/gran granular hertz/material 100000000 0.5 0.3 tangential mindlin NULL 1.0 0.4 damping tsuji                        xplane 0.0 1.0
+# retaining wall (removed to release the pile)
+fix             gate   all wall/gran granular hertz/material ${E} ${rest} ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji                        xplane NULL 0.31
+fix             gate   all wall/gran granular hertz/material 100000000 ${rest} ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji                        xplane NULL 0.31
+fix             gate   all wall/gran granular hertz/material 100000000 0.5 ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji                        xplane NULL 0.31
+fix             gate   all wall/gran granular hertz/material 100000000 0.5 0.3 tangential mindlin NULL 1.0 ${mu} damping tsuji                        xplane NULL 0.31
+fix             gate   all wall/gran granular hertz/material 100000000 0.5 0.3 tangential mindlin NULL 1.0 0.4 damping tsuji                        xplane NULL 0.31
+
+# ---------- gravity on an incline ----------
+# direction vector only; magnitude is the first argument
+variable        gx equal sin(v_theta*PI/180.0)
+variable        gy equal -cos(v_theta*PI/180.0)
+fix             grav all gravity 9.81 vector ${gx} ${gy} 0.0
+fix             grav all gravity 9.81 vector 0.422618261740699 ${gy} 0.0
+fix             grav all gravity 9.81 vector 0.422618261740699 -0.90630778703665 0.0
+
+# ---------- integration ----------
+fix             integ all nve/sphere
+fix             2d    all enforce2d
+timestep        ${dt}
+timestep        1e-05
+
+# ---------- diagnostics ----------
+compute         ke    all erotate/sphere
+compute         cont  all contact/atom
+variable        keng  equal ke
+thermo          5000
+thermo_style    custom step time atoms ke c_ke
+thermo_modify   lost ignore
+
+dump            traj all custom 1000 slope.dump id type x y z radius vx vy c_cont
+dump_modify     traj sort id
+
+# ---------- phase 1: settle against the gate ----------
+run             ${settle}
+run             30000
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0.012
+  ghost atom cutoff = 0.012
+  binsize = 0.006, bins = 167 67 1
+  2 neighbor lists, perpetual/occasional/extra = 1 1 0
+  (1) pair granular, perpetual
+      attributes: half, newton on, size, history
+      pair build: half/size/bin/atomonly/newton
+      stencil: half/bin/2d
+      bin: standard
+  (2) compute contact/atom, occasional, copy from (1)
+      attributes: half, newton on, size
+      pair build: copy
+      stencil: none
+      bin: none
+Per MPI rank memory allocation (min/avg/max) = 11.12 | 11.12 | 11.12 Mbytes
+   Step          Time         Atoms        KinEng          c_ke     
+         0   0                    513   0              0            
+      5000   0.05                 513   9.0686033      0.02325781   
+     10000   0.1                  513   6.0341994      1.0002419    
+     15000   0.15                 513   1.4268521      0.13027514   
+     20000   0.2                  513   1.7276452      0.10432259   
+     25000   0.25                 513   0.78323551     0.093264995  
+     30000   0.3                  513   0.22188381     0.034548966  
+Loop time of 2.15593 on 1 procs for 30000 steps with 513 atoms
+
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 1.5484     | 1.5484     | 1.5484     |   0.0 | 71.82
+Neigh   | 0.0065824  | 0.0065824  | 0.0065824  |   0.0 |  0.31
+Comm    | 0.0048355  | 0.0048355  | 0.0048355  |   0.0 |  0.22
+Output  | 0.015385   | 0.015385   | 0.015385   |   0.0 |  0.71
+Modify  | 0.54725    | 0.54725    | 0.54725    |   0.0 | 25.38
+Other   |            | 0.03348    |            |       |  1.55
+
+Nlocal:            513 ave         513 max         513 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           1347 ave        1347 max        1347 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 1347
+Ave neighs/atom = 2.625731
+Neighbor list builds = 197
+Dangerous builds = 0
+
+# ---------- phase 2: release ----------
+unfix           gate
+run             ${flow}
+run             150000
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
+Per MPI rank memory allocation (min/avg/max) = 12.58 | 12.58 | 12.58 Mbytes
+   Step          Time         Atoms        KinEng          c_ke     
+     30000   0.3                  513   0.22188381     0.034548966  
+     35000   0.35                 513   3.9091763      0.15730914   
+     40000   0.4                  513   11.741349      0.6568251    
+     45000   0.45                 513   22.355754      1.1968499    
+     50000   0.5                  513   29.098729      1.2151883    
+     55000   0.55                 513   39.031901      1.1472821    
+     60000   0.6                  513   48.133047      1.2982274    
+     65000   0.65                 513   60.513226      1.6132785    
+     70000   0.7                  513   71.001511      1.9504579    
+     75000   0.75                 513   75.797262      2.0668612    
+     80000   0.8                  513   78.359462      1.7432161    
+     85000   0.85                 513   72.978158      1.7646226    
+     90000   0.9                  513   67.552716      1.7030197    
+     95000   0.95                 513   61.417579      1.7798814    
+    100000   1                    513   49.936601      1.5860669    
+    105000   1.05                 513   39.519545      1.4463109    
+    110000   1.1                  513   28.993521      1.404312     
+    115000   1.15                 513   19.925155      1.1820427    
+    120000   1.2                  513   16.255041      0.65011325   
+    125000   1.25                 513   10.377192      0.88273073   
+    130000   1.3                  513   7.5677092      0.71644057   
+    135000   1.35                 513   5.401174       0.45016301   
+    140000   1.4                  513   3.3135948      0.17397806   
+    145000   1.45                 513   1.9418005      0.22170793   
+    150000   1.5                  513   0.93477863     0.12177138   
+    155000   1.55                 513   0.24125381     0.057765859  
+    160000   1.6                  513   0.14622607     0.032493183  
+    165000   1.65                 513   0.061553758    0.022105331  
+    170000   1.7                  513   0.0084681557   0.0016574705 
+    175000   1.75                 513   0.0081511899   0.0012474261 
+    180000   1.8                  513   0.0016487409   0.00050197748
+Loop time of 10.1026 on 1 procs for 150000 steps with 513 atoms
+
+99.6% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 7.4002     | 7.4002     | 7.4002     |   0.0 | 73.25
+Neigh   | 0.087997   | 0.087997   | 0.087997   |   0.0 |  0.87
+Comm    | 0.026157   | 0.026157   | 0.026157   |   0.0 |  0.26
+Output  | 0.085639   | 0.085639   | 0.085639   |   0.0 |  0.85
+Modify  | 2.3372     | 2.3372     | 2.3372     |   0.0 | 23.13
+Other   |            | 0.1654     |            |       |  1.64
+
+Nlocal:            513 ave         513 max         513 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           1289 ave        1289 max        1289 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 1289
+Ave neighs/atom = 2.5126706
+Neighbor list builds = 2302
+Dangerous builds = 0
+Total wall time: 0:00:12

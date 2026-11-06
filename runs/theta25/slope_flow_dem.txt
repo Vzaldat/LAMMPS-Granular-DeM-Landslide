@@ -1,0 +1,83 @@
+# ============================================================
+# 2D inclined-slope granular flow (DEM) - tested starter script
+# Retaining wall holds a pile of grains on an incline; the wall
+# is removed and the pile slumps/flows downslope and deposits
+# against an end wall.
+# Run:  lmp -in slope_flow_dem.in
+# Sweep: lmp -in slope_flow_dem.in -var theta 25 -var mu 0.4
+# ============================================================
+
+# ---------- parameters (edit these) ----------
+variable        theta     index 30.0      # slope angle, degrees
+variable        dia       equal 0.010     # grain diameter, m
+variable        rho       equal 2500.0    # grain density, kg/m^3
+variable        E         equal 1.0e8     # Young's modulus, Pa
+variable        nu        equal 0.3       # Poisson ratio
+variable        rest      equal 0.5       # restitution coefficient
+variable        mu        index 0.5       # friction coefficient (grain-grain and grain-wall)
+variable        dt        equal 1.0e-5    # timestep, s
+variable        settle    index 30000     # steps to settle pile (0.3 s)
+variable        flow      index 150000    # steps of flow after release (1.5 s)
+
+# ---------- setup ----------
+units           si
+dimension       2
+boundary        f f p
+atom_style      sphere
+comm_modify     vel yes
+
+# box: x = downslope, y = slope-normal
+region          box block 0.0 1.0 0.0 0.4 -0.005 0.005 units box
+create_box      1 box
+
+# grains on a square lattice slightly wider than the diameter (no initial overlap)
+lattice         sq 0.0105
+region          pile block 0.02 0.30 0.01 0.20 -0.5 0.5 units box
+create_atoms    1 region pile
+set             type 1 diameter ${dia}
+set             type 1 density/disc ${rho}
+
+# ---------- contact model ----------
+pair_style      granular
+pair_coeff      * * hertz/material ${E} ${rest} ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji
+neighbor        0.002 bin
+neigh_modify    every 1 delay 0 check yes
+
+# ---------- walls ----------
+# base (y=0) and back/end walls (x=0, x=1.0) stay for the whole run
+fix             base   all wall/gran granular hertz/material ${E} ${rest} ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji &
+                       yplane 0.0 NULL
+fix             ends   all wall/gran granular hertz/material ${E} ${rest} ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji &
+                       xplane 0.0 1.0
+# retaining wall (removed to release the pile)
+fix             gate   all wall/gran granular hertz/material ${E} ${rest} ${nu} tangential mindlin NULL 1.0 ${mu} damping tsuji &
+                       xplane NULL 0.31
+
+# ---------- gravity on an incline ----------
+# direction vector only; magnitude is the first argument
+variable        gx equal sin(v_theta*PI/180.0)
+variable        gy equal -cos(v_theta*PI/180.0)
+fix             grav all gravity 9.81 vector ${gx} ${gy} 0.0
+
+# ---------- integration ----------
+fix             integ all nve/sphere
+fix             2d    all enforce2d
+timestep        ${dt}
+
+# ---------- diagnostics ----------
+compute         ke    all erotate/sphere
+compute         cont  all contact/atom
+variable        keng  equal ke
+thermo          5000
+thermo_style    custom step time atoms ke c_ke
+thermo_modify   lost ignore
+
+dump            traj all custom 1000 slope.dump id type x y z radius vx vy c_cont
+dump_modify     traj sort id
+
+# ---------- phase 1: settle against the gate ----------
+run             ${settle}
+
+# ---------- phase 2: release ----------
+unfix           gate
+run             ${flow}

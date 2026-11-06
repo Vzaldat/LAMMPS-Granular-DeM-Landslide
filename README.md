@@ -67,3 +67,13 @@ This script creates a `frames/` directory and writes a handful of PNG snapshots 
 ## Notes
 
 This repository is intended as a simple DEM landslide starter model and is easy to adapt for parameter studies, larger domains, or alternative particle/contact laws.
+
+## Runout summary for the tested cases
+
+Using the final front-most particle position in the LAMMPS dump and subtracting the retaining-wall position at x = 0.31 m, the runout for the tested cases with `mu = 0.4` is:
+
+- `theta = 25°`: about 0.686 m
+- `theta = 30°`: about 0.686 m
+- `theta = 35°`: about 0.687 m
+
+These values are very similar because the simulation domain ends at x = 1.0 m and the deposit is constrained by the back/end wall geometry, so the final runout is effectively capped by the box rather than varying strongly with slope angle over this range.

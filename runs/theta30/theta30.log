@@ -1,0 +1,133 @@
+LAMMPS (30 Sep 2026)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread.
+  using 1 OpenMP thread(s) per MPI task
+Created orthogonal box = (0 0 -0.005) to (1 0.4 0.005)
+  1 by 1 by 1 MPI processor grid
+Lattice spacing in x,y,z = 0.0105 0.0105 0.0105
+Created 513 atoms
+  using lattice units in orthogonal box = (0 0 -0.005) to (1 0.4 0.005)
+  create_atoms CPU = 0.000 seconds
+Setting atom values ...
+  513 settings made for diameter
+Setting atom values ...
+  513 settings made for density/disc
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 0.012
+  ghost atom cutoff = 0.012
+  binsize = 0.006, bins = 167 67 1
+  2 neighbor lists, perpetual/occasional/extra = 1 1 0
+  (1) pair granular, perpetual
+      attributes: half, newton on, size, history
+      pair build: half/size/bin/atomonly/newton
+      stencil: half/bin/2d
+      bin: standard
+  (2) compute contact/atom, occasional, copy from (1)
+      attributes: half, newton on, size
+      pair build: copy
+      stencil: none
+      bin: none
+Setting up Verlet run ...
+  Unit style    : si
+  Current step  : 0
+  Time step     : 1e-05
+Per MPI rank memory allocation (min/avg/max) = 11.12 | 11.12 | 11.12 Mbytes
+   Step          Time         Atoms        KinEng          c_ke     
+         0   0                    513   0              0            
+      5000   0.05                 513   9.4726087      0.028121877  
+     10000   0.1                  513   6.8719112      0.58560596   
+     15000   0.15                 513   1.9552005      0.22874773   
+     20000   0.2                  513   1.8621342      0.10838649   
+     25000   0.25                 513   1.4367073      0.13495798   
+     30000   0.3                  513   0.29197153     0.039550327  
+Loop time of 2.08698 on 1 procs for 30000 steps with 513 atoms
+
+100.0% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 1.4619     | 1.4619     | 1.4619     |   0.0 | 70.05
+Neigh   | 0.0068316  | 0.0068316  | 0.0068316  |   0.0 |  0.33
+Comm    | 0.0048089  | 0.0048089  | 0.0048089  |   0.0 |  0.23
+Output  | 0.018626   | 0.018626   | 0.018626   |   0.0 |  0.89
+Modify  | 0.56108    | 0.56108    | 0.56108    |   0.0 | 26.88
+Other   |            | 0.03377    |            |       |  1.62
+
+Nlocal:            513 ave         513 max         513 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           1324 ave        1324 max        1324 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 1324
+Ave neighs/atom = 2.5808967
+Neighbor list builds = 196
+Dangerous builds = 0
+Generated 0 of 0 mixed pair_coeff terms from geometric mixing rule
+Setting up Verlet run ...
+  Unit style    : si
+  Current step  : 30000
+  Time step     : 1e-05
+Per MPI rank memory allocation (min/avg/max) = 12.58 | 12.58 | 12.58 Mbytes
+   Step          Time         Atoms        KinEng          c_ke     
+     30000   0.3                  513   0.29197153     0.039550327  
+     35000   0.35                 513   4.7968562      0.14093443   
+     40000   0.4                  513   17.517666      0.28780955   
+     45000   0.45                 513   31.687236      0.46988455   
+     50000   0.5                  513   45.443005      0.82833657   
+     55000   0.55                 513   61.125207      1.1241416    
+     60000   0.6                  513   81.597713      1.4848952    
+     65000   0.65                 513   100.70447      1.784377     
+     70000   0.7                  513   114.11679      2.5668096    
+     75000   0.75                 513   114.34435      2.3659369    
+     80000   0.8                  513   109.60618      2.251013     
+     85000   0.85                 513   89.895645      2.0232381    
+     90000   0.9                  513   70.55659       1.8642937    
+     95000   0.95                 513   58.282415      1.4004284    
+    100000   1                    513   43.523636      1.2702158    
+    105000   1.05                 513   34.53359       1.4394981    
+    110000   1.1                  513   24.382002      1.3664449    
+    115000   1.15                 513   14.982927      1.0727377    
+    120000   1.2                  513   7.9181225      0.74439568   
+    125000   1.25                 513   3.4313065      0.30838256   
+    130000   1.3                  513   2.4292125      0.23284134   
+    135000   1.35                 513   0.77644685     0.11489716   
+    140000   1.4                  513   0.49512015     0.043956537  
+    145000   1.45                 513   0.054506618    0.013642677  
+    150000   1.5                  513   0.020912838    0.0060248519 
+    155000   1.55                 513   0.0078071987   0.0024036561 
+    160000   1.6                  513   0.0049741454   0.0015342049 
+    165000   1.65                 513   0.0064140944   0.0014611748 
+    170000   1.7                  513   0.0066681783   0.0013507214 
+    175000   1.75                 513   0.0015617576   0.00011690756
+    180000   1.8                  513   0.0010898622   1.7504426e-05
+Loop time of 10.2497 on 1 procs for 150000 steps with 513 atoms
+
+99.7% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 7.4215     | 7.4215     | 7.4215     |   0.0 | 72.41
+Neigh   | 0.090403   | 0.090403   | 0.090403   |   0.0 |  0.88
+Comm    | 0.026842   | 0.026842   | 0.026842   |   0.0 |  0.26
+Output  | 0.087818   | 0.087818   | 0.087818   |   0.0 |  0.86
+Modify  | 2.4543     | 2.4543     | 2.4543     |   0.0 | 23.94
+Other   |            | 0.1689     |            |       |  1.65
+
+Nlocal:            513 ave         513 max         513 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:           1293 ave        1293 max        1293 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 1293
+Ave neighs/atom = 2.5204678
+Neighbor list builds = 2237
+Dangerous builds = 0
+Total wall time: 0:00:12
